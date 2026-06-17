@@ -1,0 +1,118 @@
+﻿@using SIMBG.Compartido.Modelos
+@page "/bitacora"
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<MudText Typo="Typo.h3" Class="mb-4" Color="Color.Primary">Bitácora de Asistencia</MudText>
+
+<MudCard Elevation="3" Class="mb-4">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Registros del Laboratorio</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EscanearHuella" Disabled="@_esperandoSensor">
+                @if (_esperandoSensor)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" Color="Color.Surface" />
+                    <span class="ms-2">Esperando huella...</span>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Fingerprint" Class="me-2" />
+                    <span>Escanear Huella</span>
+                }
+            </MudButton>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+
+        <MudTable Items="@registrosReales" Hover="true" Breakpoint="Breakpoint.Sm" Striped="true" Loading="@(registrosReales == null)">
+            <HeaderContent>
+                <MudTh>Matrícula</MudTh>
+                <MudTh>Nombre</MudTh>
+                <MudTh>Hora Entrada</MudTh>
+                <MudTh>Hora Salida</MudTh>
+                <MudTh>Estado</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="registro">
+                <MudTd DataLabel="Matrícula">@registro.Matricula</MudTd>
+                <MudTd DataLabel="Nombre">@registro.NombreCompleto</MudTd>
+                <MudTd DataLabel="Entrada">@registro.FechaEntrada.ToString("dd/MM/yyyy HH:mm")</MudTd>
+
+                <MudTd DataLabel="Salida">@(registro.FechaSalida.HasValue ? registro.FechaSalida.Value.ToString("HH:mm") : "--:--")</MudTd>
+
+                <MudTd DataLabel="Estado">
+                    @if (registro.Estado == "En Laboratorio")
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small">@registro.Estado</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Default" Size="Size.Small">@registro.Estado</MudChip>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" InfoFormat="{first_item}-{last_item} de {all_items}" />
+            </PagerContent>
+        </MudTable>
+
+    </MudCardContent>
+</MudCard>
+
+
+@code {
+    
+    //variable bandera para mostrar el spinner en el botón mientras se espera la lectura del sensor
+    private bool _esperandoSensor = false;
+
+    private async Task EscanearHuella()
+    {
+        _esperandoSensor = true;
+        StateHasChanged(); // Forzamos la actualización para mostrar el spinner
+        try
+        {
+            // 2. Disparamos la petición
+            var respuesta = await Http.PostAsync("https://f3hnv5m6-7202.usw3.devtunnels.ms/api/Bitacora/escanear", null);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                await OnInitializedAsync(); // Recargamos la tabla
+            }
+            else
+            {
+                var error = await respuesta.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error del Backend: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error de Red: {ex.Message}");
+        }
+        finally
+        {
+            // 3. Pase lo que pase (éxito o error), apagamos el estado de carga
+            _esperandoSensor = false;
+            StateHasChanged();
+        }
+    }
+
+        
+    
+    // Ahora usamos el DTO oficial
+    private List<RegistroBitacoraDTO>? registrosReales;
+
+protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            registrosReales = await Http.GetFromJsonAsync<List<RegistroBitacoraDTO>>("https://f3hnv5m6-7202.usw3.devtunnels.ms/api/Bitacora");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar bitácora: {ex.Message}");
+        }
+    }
+
+}

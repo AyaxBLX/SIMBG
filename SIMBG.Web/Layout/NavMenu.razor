@@ -1,0 +1,77 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using SIMBG.Web.Auth
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navegador
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" style="color: yellow;" href="">SIMBG - HOLA FÉLIX</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="bitacora">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Bitácora
+            </NavLink>
+        </div>
+
+        <AuthorizeView Roles="Administrador">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="estudiantes">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Estudiantes
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3 mt-5" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <div class="text-white mb-2" style="font-size: 0.8rem;">
+                        🕵️ Rol actual: @(context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "Ninguno detectado")
+                    </div>
+                    <button class="btn btn-outline-light btn-sm w-100" @onclick="CerrarSesion">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task CerrarSesion()
+    {
+        // 1. Borramos el gafete viejo del disco duro del navegador
+        await LocalStorage.RemoveItemAsync("tokenJwt");
+
+        // 2. Le avisamos al Cadenero que ya nos fuimos
+        ((ProveedorAutenticacionJWT)AuthProvider).NotificarUsuarioDeslogueado();
+
+        // 3. Te mandamos a la pantalla de Login
+        Navegador.NavigateTo("/login");
+    }
+}

@@ -1,0 +1,103 @@
+﻿@page "/login"
+@layout MainLayout
+@using System.Net.Http.Json
+@using SIMBG.Web.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using Blazored.LocalStorage
+
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navegador
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudCard Elevation="4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Primary"><strong>Sistema SIMBG</strong></MudText>
+                <MudText Typo="Typo.subtitle1" Align="Align.Center">Acceso para Administradores</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm @ref="form">
+                <MudTextField @bind-Value="modelo.Correo" Label="Correo Electrónico" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
+                <MudTextField @bind-Value="modelo.Password" Label="Contraseña" Variant="Variant.Outlined" InputType="InputType.Password" Margin="Margin.Dense" Class="mb-4" />
+            </MudForm>
+        </MudCardContent>
+        <MudCardActions Class="d-flex justify-center pb-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="IniciarSesion" Disabled="@_cargando">
+                @if (_cargando)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" Color="Color.Surface" />
+                    <span class="ms-2">Verificando...</span>
+                }
+                else
+                {
+                    <span>Iniciar Sesión</span>
+                }
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private LoginDTO modelo = new LoginDTO();
+    private MudForm form = default!;
+    private bool _cargando = false;
+
+    // Asegúrate de actualizar esta URL si tu túnel de VS cambia
+    private string urlApi = "https://f3hnv5m6-7202.usw3.devtunnels.ms/api/Auth/login";
+
+    private async Task IniciarSesion()
+    {
+        _cargando = true;
+        try
+        {
+            var respuesta = await Http.PostAsJsonAsync(urlApi, modelo);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                var resultado = await respuesta.Content.ReadFromJsonAsync<RespuestaLogin>();
+                if (resultado != null && resultado.Exito)
+                {
+                    // 1. Guardamos el token en el navegador
+                    await LocalStorage.SetItemAsync("tokenJwt", resultado.Token);
+                    
+                    // 2. Le avisamos a nuestro Cadenero que ya tenemos el Pase VIP
+                    ((ProveedorAutenticacionJWT)AuthProvider).NotificarUsuarioLogueado(resultado.Token);
+                    
+                    // 3. Mostramos un mensaje de éxito y lo mandamos a la bitácora
+                    Snackbar.Add($"Bienvenido, {resultado.Usuario}", Severity.Success);
+                    Navegador.NavigateTo("/bitacora");
+                }
+            }
+            else
+            {
+                Snackbar.Add("Credenciales incorrectas o no tienes permisos de administrador.", Severity.Error);
+            }
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Error de conexión con el servidor.", Severity.Error);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    public class LoginDTO
+    {
+        public string Correo { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class RespuestaLogin
+    {
+        public bool Exito { get; set; }
+        public string Token { get; set; } = string.Empty;
+        public string Usuario { get; set; } = string.Empty;
+        public string Rol { get; set; } = string.Empty;
+    }
+}

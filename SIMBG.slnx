@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="SIMBG.API/SIMBG.API.csproj" Id="7374b14c-589f-4e83-b8c8-8d9266d65bd7">
+    <BuildDependency Project="SIMBG.Web/SIMBG.Web.csproj" />
+  </Project>
+  <Project Path="SIMBG.Compartido/SIMBG.Compartido.csproj" Id="f80f555f-9eb7-4c20-8697-35a352efd358" />
+  <Project Path="SIMBG.Web/SIMBG.Web.csproj" Id="23d4c2dc-95f5-4e5d-a1dd-f071eb1e2926" />
+  <Project Path="SimbgBiometricApi/SimbgBiometricApi.csproj" Id="3944efc1-c8e8-41d6-ac38-1a2908bd7d89" />
+</Solution>

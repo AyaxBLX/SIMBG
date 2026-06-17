@@ -1,0 +1,55 @@
+﻿@page "/documentos"
+@using SIMBG.Compartido.Modelos
+
+<MudText Typo="Typo.h3" Class="mb-4">Gestor Documental</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload" Class="mb-4">
+    Subir Nuevo Documento
+</MudButton>
+
+<MudTable Items="@listaDocumentos" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="3">
+    
+    <HeaderContent>
+        <MudTh>Tipo de Documento</MudTh>
+        <MudTh>Archivo</MudTh>
+        <MudTh>Estado</MudTh>
+        <MudTh>Comentarios</MudTh>
+        <MudTh>Acciones</MudTh>
+    </HeaderContent>
+    
+    <RowTemplate>
+        <MudTd DataLabel="Tipo">@context.TipoDoc</MudTd>
+        <MudTd DataLabel="Archivo">@context.RutaArchivo</MudTd>
+        
+        <MudTd DataLabel="Estado">
+            @if(context.Estado == "Aprobado") { 
+                <MudChip T="string" Color="Color.Success" Size="Size.Small">@context.Estado</MudChip> 
+            }
+            else if(context.Estado == "Pendiente") { 
+                <MudChip T="string" Color="Color.Warning" Size="Size.Small">@context.Estado</MudChip> 
+            }
+            else { 
+                <MudChip T="string" Color="Color.Error" Size="Size.Small">@context.Estado</MudChip> 
+            }
+        </MudTd>
+        
+        <MudTd DataLabel="Comentarios">@context.Comentario</MudTd>
+        
+        <MudTd DataLabel="Acciones">
+            <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Info" Size="Size.Small" aria-label="descargar" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" aria-label="borrar" />
+        </MudTd>
+    </RowTemplate>
+
+</MudTable>
+
+@code {
+    // Hemos creado una lista de documentos ficticia para ver cómo se dibuja la tabla.
+    // Cuando conectemos la API, borraremos esto y la lista se llenará con los datos de la Raspberry.
+    private List<GestorDocumento> listaDocumentos = new List<GestorDocumento>
+    {
+        new GestorDocumento { Id = 1, TipoDoc = "Identificación", RutaArchivo = "INE_Felix.pdf", Estado = "Aprobado", Comentario = "Todo en orden" },
+        new GestorDocumento { Id = 2, TipoDoc = "Avance Proyecto", RutaArchivo = "Reporte_Fase1.pdf", Estado = "Pendiente", Comentario = "" },
+        new GestorDocumento { Id = 3, TipoDoc = "Carta Compromiso", RutaArchivo = "Carta_Firma.pdf", Estado = "Rechazado", Comentario = "Falta tu firma en la página 2" }
+    };
+}

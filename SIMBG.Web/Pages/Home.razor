@@ -1,0 +1,73 @@
+﻿@page "/"
+@using SIMBG.Compartido.Modelos
+@using System.Net.Http.Json
+@inject HttpClient Http // Inyectamos el servicio HttpClient para hacer solicitudes HTTP//
+
+<MudText Typo="Typo.h3" Class="mb-4">Mi Perfil</MudText >
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="4">
+        
+        <MudCard Elevation="3">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Datos del Estudiante</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" aria-label="editar perfil" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            
+            <MudCardContent>
+                <!--Si la variable está vacía entonces se muestra la animación de carga-->
+                @if (usuarioActual == null)
+                {
+                    <div class="d-flex flex-column align-center justify-center my-4">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        <MudText Typo="Typo.body2" Class="mt-2">Conectando con la Raspberry Pi...</MudText>
+                    </div>
+                }
+                else //Si los datos ya fueron cargados entonces se muestra la info real
+                {
+                    <MudText Typo="Typo.body1"><strong>Nombre:</strong> @usuarioActual!.Nombre @usuarioActual!.ApellidoPaterno</MudText>
+                    <MudText Typo="Typo.body1"><strong>Matrícula:</strong> @usuarioActual!.Matricula</MudText>
+                    <MudText Typo="Typo.body1"><strong>Correo:</strong> @usuarioActual!.Correo</MudText>
+                <MudText Typo="Typo.body2" Class="mt-4"><strong>Rol en el sistema:</strong> @usuarioActual!.Rol</MudText>
+                }         
+             </MudCardContent>
+            
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Disabled="@(usuarioActual == null)">Actualizar Datos</MudButton>
+            </MudCardActions>
+        </MudCard>
+
+    </MudItem>
+</MudGrid>
+
+@code {
+    //Variable para almacenar los datos del usuario actual
+    private Usuario? usuarioActual;
+    
+    // Aquí es donde próximamente escribiremos el código C# para llamar a la bd y llenar la tarjeta con la información real que viaja desde la Raspberry Pi.
+        //esta función debe ejecutarse al cargar la página
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            //Se hace la llamada GET a la API para obtener los datos del usuario actual
+            //Usamos el puerto 7202 porque es el que se configuró en el proyecto de la API
+            var listaUsuarios = await Http.GetFromJsonAsync<List<Usuario>>("https://f3hnv5m6-7202.usw3.devtunnels.ms/api/Usuarios");
+
+            if (listaUsuarios != null && listaUsuarios.Count > 0)
+            {
+                //Au no tenemos el LOGIN, tomamos el primer usuario de la lista como el usuario actual
+                usuarioActual = listaUsuarios.First();
+            }
+        }
+        catch (Exception ex)
+        {
+
+            Console.WriteLine($"Error de conexión: {ex.Message}");
+        }
+        }
+        }

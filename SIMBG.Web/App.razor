@@ -1,0 +1,28 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using SIMBG.Web.Pages
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+            <NotAuthorized>
+                @if (context.User.Identity?.IsAuthenticated != true)
+                {
+                    <p>No has iniciado sesión. <a href="/login">Ir al login</a></p>
+                }
+                else
+                {
+                    <p>No tienes permisos de Administrador para acceder a esta página.</p>
+                }
+            </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <PageTitle>Página no encontrada</PageTitle>
+                <LayoutView Layout="@typeof(MainLayout)">
+                    <p role="alert">Lo sentimos, no hay nada en esta dirección.</p>
+                </LayoutView>
+                </NotFound>
+    </Router>
+</CascadingAuthenticationState>
